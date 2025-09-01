@@ -1,0 +1,31 @@
+DO $$
+DECLARE
+    trigger_rec RECORD;
+    function_rec RECORD;
+BEGIN
+    -- First, drop all triggers in the specified schema
+    FOR trigger_rec IN 
+        SELECT tg.tgname AS trigger_name,
+               c.relname AS table_name,
+               n.nspname AS schema_name
+        FROM pg_trigger tg
+        JOIN pg_class c ON tg.tgrelid = c.oid
+        JOIN pg_namespace n ON c.relnamespace = n.oid
+        WHERE tg.tgisinternal = FALSE  -- Exclude system/internal triggers
+          AND n.nspname = 'enterprise'  -- Specify your schema here
+    LOOP
+        EXECUTE 'DROP TRIGGER IF EXISTS ' || trigger_rec.trigger_name || ' ON ' || trigger_rec.schema_name || '.' || trigger_rec.table_name;
+    END LOOP;
+
+    -- Then, drop all trigger functions in the specified schema
+    FOR function_rec IN 
+        SELECT p.proname AS function_name,
+               n.nspname AS schema_name
+        FROM pg_proc p
+        JOIN pg_namespace n ON p.pronamespace = n.oid
+        WHERE n.nspname = 'enterprise'  -- Specify your schema here
+          AND p.prorettype = 'pg_catalog.trigger'::regtype  -- Only trigger functions
+    LOOP
+        EXECUTE 'DROP FUNCTION IF EXISTS ' || function_rec.schema_name || '.' || function_rec.function_name || '() CASCADE';
+    END LOOP;
+END $$;
