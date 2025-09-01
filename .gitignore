@@ -1,0 +1,7 @@
+# Ignore temp files
+*.log
+*.tmp
+*.bak
+*.csv
+*.out
+.DS_Store
