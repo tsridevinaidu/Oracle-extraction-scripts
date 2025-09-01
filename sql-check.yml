@@ -1,0 +1,23 @@
+name: SQL Validation
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  sql-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Validate SQL Files
+        run: |
+          echo "Checking SQL syntax..."
+          for file in $(find . -name '*.sql'); do
+            echo "Validating $file"
+            # Basic syntax check using psql (you can expand later)
+            psql -d postgres -c "EXPLAIN (PARSE ONLY) $(cat $file)" || exit 1
+          done
